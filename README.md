@@ -1,6 +1,11 @@
-# Karaokeq
+# Install instructions
 
-hi
+1) install npm
 
-## TODOs
-- when the client receives a song it doesn't recognize, it'll simply skip over it, but as a result it will keep being put as second in the queue on the serverside
+2) npm install --global yarn
+
+3) npm install -g wrangler
+
+npm install --save-dev ajv    ?
+
+4) yarn wrangler dev --local
