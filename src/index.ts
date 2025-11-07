@@ -28,16 +28,20 @@ export default {
 		}
 
 		try {
+            if (env.KARAOKEQ && (await env.KARAOKEQ.get('a_jiri')) == null) {
+                await env.KARAOKEQ.put('a_jiri', 'my-local-token');
+            }
+            
 			const reqInfo = await parseReqInfoWithParams(req, '/:domain/*')
-			// console.log('Fetch from', JSON.stringify([...req.headers.entries()]), JSON.stringify(reqInfo))
+			console.log('Fetch from', JSON.stringify([...req.headers.entries()]), JSON.stringify(reqInfo))
 			reqInfo.path = reqInfo.path.replace(/^[^\/]+\//, '') // Remove domain from the path
 
 			const userName = req.headers.get('Q-User-Name')
 			const sessionToken = req.headers.get('Q-Session')
 			const adminToken = req.headers.get('Q-Admin-Token')
 
-			const baseUrl = 'https://karaokeq.q42.workers.dev'
-			// const baseUrl = 'http://localhost:8787'
+			// const baseUrl = 'https://karaokeq.q42.workers.dev'
+			const baseUrl = 'http://localhost:8787'
 			const handler = new Handler(env, baseUrl, reqInfo.pathParams.domain, userName, sessionToken, adminToken)
 			const result = await handler.handleRequest(reqInfo)
 

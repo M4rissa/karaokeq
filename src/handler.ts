@@ -62,6 +62,7 @@ export default class Handler {
     if (is('POST',  'vote'))      return this.voteSong(body.songId)
     if (is('POST',  'request'))   return this.requestSong(body.songId)
     if (is('GET',   'config'))    return this.config() // todo: return proper cache headers
+    if (is('POST',  'flush-invalid')) return this.removeSongsFromQueue(body.invalidSongs)  
     if (method == 'OPTIONS')      return null
     // Admin handlers
     if (is('POST',  'reset'))     return this.adminResetQueue()
@@ -132,7 +133,11 @@ export default class Handler {
       await this.setQ(q)
     }
     // Just fill out the list because ultrastar has some glitchy behaviour which causes it to break if there's not at least 10 items in the list
-    return q.map(s => s.id).join('\n') + `\n${fillSong}`.repeat(10)
+    console.log('     \n\n\n\n');
+    console.log(q)
+    const result = q.map(s => s.id).join('\n') + `\n${fillSong}`.repeat(10)
+
+    return result;
   }
 
   async createQueue(initial: Q = []): Promise<Q> {
@@ -200,6 +205,7 @@ export default class Handler {
     return this.updateItemInQ(setVotes(s, votess), q)
   })
   adminRemoveSongFromQueue = this.adminHandler(async (songId: string): Promise<Q> => {
+    console.log(songId);
     return this.setQ((await this.getQ()).filter(s => s.id !== songId))
   })
   adminSetQueue = this.adminHandler(async (q: Q): Promise<Q> => {
@@ -262,10 +268,10 @@ export default class Handler {
 
   private async cacheSonglist(sl: SongList) {
     // todo: perhaps add some cache headers if this doesn't work well enough (see https://developers.cloudflare.com/workers/runtime-apis/cache/#headers)
-    await caches.open(this.domain).then(c => c.put('https://karaokeq.q42.workers.dev/songlist.json', new Response(JSON.stringify(sl), {headers: {'content-type': 'application/json',}})))
+    await caches.open(this.domain).then(c => c.put('http://localhost:8787/songlist.json', new Response(JSON.stringify(sl), {headers: {'content-type': 'application/json',}})))
   }
   private async getCachedSonglist(): Promise<Response|undefined> {
-    return caches.open(this.domain).then(c => c.match('https://karaokeq.q42.workers.dev/songlist.json'))
+    return caches.open(this.domain).then(c => c.match('http://localhost:8787/songlist.json'))
   }
   private async getSonglistt(): Promise<SongList> {
     const sl = await this.getSonglist()
@@ -281,4 +287,9 @@ export default class Handler {
     const expected = await this.kv.get(this.aKey, {cacheTtl: 3600})
     return !!expected && expected === this.userName
   }
+
+    private async removeSongsFromQueue(songs: string[]) {
+        return this.setQ((await this.getQ()).filter(s => !songs.includes(s.id)))
+    }
+    
 }
